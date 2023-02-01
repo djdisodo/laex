@@ -23,17 +23,28 @@ impl<const D: usize> From<[usize; D]> for Shape<D> {
     }
 }
 
-impl<const D: usize> From<Vec<i64>> for Shape<D> {
-    fn from(shape: Vec<i64>) -> Self {
-        let mut dims = [1; D];
-        for (i, dim) in shape.into_iter().enumerate() {
-            dims[i] = dim as usize;
-        }
-        Self::new(dims)
-    }
-}
-
 impl<const D1: usize> Shape<D1> {
+    pub fn assert_reshape<const D2: usize>(&self, rhs: Shape<D2>) {
+        let lhs_e = self.num_elements();
+        let rhs_e = rhs.num_elements();
+        assert_eq!(
+            lhs_e,
+            rhs_e,
+            "illegal reshape {self:#?} ({lhs_e} elements) to {rhs:#?} ({rhs_e} elements)"
+        );
+    }
+
+    pub fn assert_broadcast(&self, rhs: Self) {
+        for (dim, (l, r)) in self.dims.iter().zip(rhs.dims.iter()).enumerate() {
+            if *r != 1 {
+                assert_eq!(
+                    l, r,
+                    "illegal broadcast {self:#?} to {rhs:#?} at dim: {dim}"
+                )
+            }
+        }
+    }
+
     pub fn index<const D2: usize>(&self, indexes: [Range<usize>; D2]) -> Self {
         if D2 > D1 {
             panic!("Cant index that");
@@ -78,4 +89,11 @@ impl<const D1: usize> Shape<D1> {
             *self
         }
     }
+}
+
+/// just here to prevent functions having too many arguments
+#[derive(new, Copy, Clone, Debug)]
+pub struct WithShape<T, const D: usize> {
+    pub array: T,
+    pub shape: Shape<D>
 }

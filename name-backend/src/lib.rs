@@ -1,4 +1,4 @@
-#![feature(trait_alias)]
+#![feature(trait_alias, generic_const_exprs)]
 
 use std::fmt::{Debug, Display};
 use std::sync::Arc;
@@ -14,7 +14,7 @@ macro_rules! include_mod {
 
 include_mod!(element);
 
-pub trait TensorPrimitiveConstraint<Device, const D: usize> =
+pub trait ArrayConstraint<Device> =
     Clone
     + Display
     + Debug
@@ -22,6 +22,7 @@ pub trait TensorPrimitiveConstraint<Device, const D: usize> =
     + Sync
     + AsRef<Arc<Device>>
 ;
+
 
 pub trait Backend: 'static {
     type Device: Send + Sync;
