@@ -8,7 +8,7 @@ trait TensorAsRef: Sized {
     type TyReshape<const D0: usize>;
     fn reshape2<const D1: usize>(self, shape: Shape<D1>) -> Self::TyReshape<D1>;
     fn array_ref(&self) -> &<Self::Backend as FArray<Self::T>>::Array;
-    fn shape_ref(&self) -> &Shape<{Self::D}>;
+    fn shape_ref(&self) -> &Shape<{Self::D}> where [(); Self::D]: ;
     fn shape_mut(&mut self) -> &mut Shape<{Self::D}>;
 
     fn as_with_shape(&self) -> WithShape<&<Self::Backend as FArray<Self::T>>::Array, {Self::D}> {
@@ -18,7 +18,7 @@ trait TensorAsRef: Sized {
         }
     }
 
-    fn as_ref(&self) -> TensorRef<Self::T, {Self::D}, Self::Backend> {
+    fn as_ref(&self) -> TensorRef<Self::T, {Self::D}, Self::Backend> where [(); Self::D]: {
         TensorRef {
             array: self.array_ref(),
             shape: *self.shape_ref(),
@@ -64,12 +64,14 @@ pub trait TensorExt: TensorAsRef {
         *self.shape_mut() = shape;
     }
 
-    fn into_shape<const D: usize>(self, shape: Shape<D>) -> Self::TyReshape<D> {
+    fn into_shape<const D: usize>(self, shape: Shape<D>) -> Self::TyReshape<D> where [(); Self::D]: {
         self.shape_ref().assert_reshape(shape);
         <Self as TensorAsRef>::reshape2(self, shape)
     }
 
-    fn with_shape<const D: usize>(&self, shape: Shape<D>) -> TensorRef<Self::T, D, Self::Backend> {
+    fn with_shape<const D: usize>(&self, shape: Shape<D>) -> TensorRef<Self::T, D, Self::Backend>
+        where [(); Self::D]: Sized, [(); <TensorRef<Self::T, {Self::D}, Self::Backend> as TensorAsRef>::D]:
+    {
         self.as_ref().into_shape(shape)
     }
 }
